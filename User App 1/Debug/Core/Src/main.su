@@ -1,0 +1,12 @@
+../Core/Src/main.c:102:5:del_mem	40	static
+../Core/Src/main.c:126:6:jump_to_bl_code_uart	24	static,ignoring_inline_asm
+../Core/Src/main.c:165:6:set_run_ok_flag	176	static
+../Core/Src/main.c:191:6:set_user_to_bl_flag	112	static
+../Core/Src/main.c:213:6:user_code_go_back_to_bootloader	40	static
+../Core/Src/main.c:228:6:processing_uart_command	16	static
+../Core/Src/main.c:250:5:main	16	static
+../Core/Src/main.c:313:6:SystemClock_Config	120	static
+../Core/Src/main.c:373:7:MX_USART1_UART_Init	8	static
+../Core/Src/main.c:421:7:MX_GPIO_Init	40	static
+../Core/Src/main.c:454:6:MPU_Config	24	static
+../Core/Src/main.c:485:6:Error_Handler	4	static,ignoring_inline_asm

@@ -1,0 +1,11 @@
+../Core/Src/udpServer.c:58:6:del_mem	2
+../Core/Src/udpServer.c:81:6:jump_to_code	1
+../Core/Src/udpServer.c:92:6:check_mem	3
+../Core/Src/udpServer.c:121:6:udpServer_init	2
+../Core/Src/udpServer.c:150:6:udp_receive_callback	11
+../Core/Src/udpServer.c:199:6:send_udp_response	2
+../Core/Src/udpServer.c:206:6:bl_check_connect	2
+../Core/Src/udpServer.c:222:6:bl_check_mem	2
+../Core/Src/udpServer.c:239:6:bl_write_mem	22
+../Core/Src/udpServer.c:346:6:bl_erase_mem	2
+../Core/Src/udpServer.c:361:6:bl_jump_to_code	2

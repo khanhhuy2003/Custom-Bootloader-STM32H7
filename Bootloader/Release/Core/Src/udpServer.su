@@ -1,0 +1,11 @@
+../Core/Src/udpServer.c:58:6:del_mem	48	static
+../Core/Src/udpServer.c:81:6:jump_to_code	24	static,ignoring_inline_asm
+../Core/Src/udpServer.c:92:6:check_mem	152	static
+../Core/Src/udpServer.c:121:6:udpServer_init	24	static
+../Core/Src/udpServer.c:150:6:udp_receive_callback	32	static
+../Core/Src/udpServer.c:199:6:send_udp_response	40	static
+../Core/Src/udpServer.c:206:6:bl_check_connect	40	static
+../Core/Src/udpServer.c:222:6:bl_check_mem	40	static
+../Core/Src/udpServer.c:239:6:bl_write_mem	312	static,ignoring_inline_asm
+../Core/Src/udpServer.c:346:6:bl_erase_mem	40	static
+../Core/Src/udpServer.c:361:6:bl_jump_to_code	40	static

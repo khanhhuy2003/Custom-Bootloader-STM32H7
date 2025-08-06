@@ -1,0 +1,4 @@
+../Core/Src/Defind.c:64:10:crc32_custom	32	static
+../Core/Src/Defind.c:77:10:crc32	16	static
+../Core/Src/Defind.c:99:6:DWT_Init	4	static
+../Core/Src/Defind.c:104:6:delay_us	24	static
