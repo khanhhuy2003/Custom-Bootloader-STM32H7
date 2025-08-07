@@ -1,5 +1,7 @@
 "./Core/Src/Defind.o"
+"./Core/Src/bl_command_processing.o"
 "./Core/Src/gpio.o"
+"./Core/Src/helper_function.o"
 "./Core/Src/main.o"
 "./Core/Src/rng.o"
 "./Core/Src/stm32h7xx_hal_msp.o"

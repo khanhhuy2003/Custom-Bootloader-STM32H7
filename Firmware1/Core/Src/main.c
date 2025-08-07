@@ -15,15 +15,17 @@
 #include "Define.h"
 #include "stdio.h"
 #include "string.h"
+#include <inttypes.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 #define MAGIC_ADDR ((uint64_t*)0x080E0000)
 #define FIRMWARE_ADDR ((uint64_t*)0x08020000)
-#define VERSION_OK_FLAG 0x080A0000
+#define USER_TO_BL 0x080A0000
 #define MAX_FAILED_ALLOWED 1
 #define RUN_OK_VALUE 0xDEADBEEF
+#define SAVED_VER_ADDR 0x080174A0
 
 
 /*
@@ -212,7 +214,7 @@ int del_mem(uint8_t start, uint8_t number_of_sector){
     }
 }
 void clear_flag(){
-	del_mem(FLASH_SECTOR_6, 1);
+	del_mem(FLASH_SECTOR_5, 1);
 }
 void bl_jump_to_code_uart(uint8_t *buffer){
 	uint32_t len = buffer[0] + 1;
@@ -252,7 +254,7 @@ void bl_check_connect_uart(uint8_t *buffer) {
 		HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
 	}
 }
-static uint32_t current_verified_app_base = 0;
+static volatile  uint32_t current_verified_app_base = 0;
 void bl_reset_metadata_state(void) {
     current_verified_app_base = 0;
 }
@@ -308,7 +310,7 @@ void bl_write_mem_uart(uint8_t *buffer) {
         F.address = address + 224;
         F.version = version_ex;
 
-        uint64_t *flag_ptr = (uint64_t *)VERSION_OK_FLAG;
+        uint64_t *flag_ptr = (uint64_t *)SAVED_VER_ADDR;
         while (*flag_ptr != 0xFFFFFFFFFFFFFFFFULL) {
             uint32_t stored_version = *(uint32_t *)flag_ptr;
             if (version_ex <= stored_version) {
@@ -347,7 +349,7 @@ void bl_write_mem_uart(uint8_t *buffer) {
         memcpy(version_block, &F, 8); // chỉ lưu version
 
         HAL_FLASH_Unlock();
-        uint32_t dummy_flag = VERSION_OK_FLAG; //0x08020000
+        uint32_t dummy_flag = SAVED_VER_ADDR; //0x08020000
         uint64_t temp;
         while (1) {
             memcpy(&temp, dummy_flag, sizeof(temp));
@@ -366,18 +368,21 @@ void bl_write_mem_uart(uint8_t *buffer) {
 			return;
 		}
 	    HAL_FLASH_Lock();
-	    current_verified_app_base = 1;
+	    //current_verified_app_base = 1;
         HAL_UART_Transmit(&huart1, (uint8_t *)"Metadata Signature OK\r\n", 26, HAL_MAX_DELAY);
 
         return;
     }
 
-    if(current_verified_app_base != 1){
-    	HAL_UART_Transmit(&huart1, (uint8_t *)"ECC of version is FAILED\r\n", 30, HAL_MAX_DELAY);
-    	return;
-    }
+//    if(current_verified_app_base != 1){
+//    	HAL_UART_Transmit(&huart1, (uint8_t *)"9999\r\n", 30, HAL_MAX_DELAY);
+//    	return;
+//    }
 	if (address < 0x08000000 || address + size_firmware > 0x08200000 || address % 32 != 0) {
-		HAL_UART_Transmit(&huart1, (uint8_t *)"INVALID FIRMWARE ADDRESS\r\n", 25, HAL_MAX_DELAY);
+		char msg[64];
+		sprintf(msg, "0x%08lX\r\n", address);
+		HAL_UART_Transmit(&huart1, (uint8_t *)msg, strlen(msg), HAL_MAX_DELAY);
+		//HAL_UART_Transmit(&huart1, (uint8_t *)"INVALID FIRMWARE ADDRESS\r\n", 25, HAL_MAX_DELAY);
 		return;
 	}
 	if (address == APP1_ADDR_START + 224 || address == APP2_ADDR_START + 224) {
@@ -512,7 +517,7 @@ void bl_verify_signature(uint8_t *buffer) {
     mbedtls_sha256_free(&sha_ctx);
 
     if (memcmp(host_hash, calc_hash, 32) != 0) {
-        HAL_UART_Transmit(&huart1, (uint8_t *)"❌ SHA256 mismatch\r\n", 21, HAL_MAX_DELAY);
+        HAL_UART_Transmit(&huart1, (uint8_t *)"SHA256 mismatch\r\n", 21, HAL_MAX_DELAY);
         return;
     }
     mbedtls_ecdsa_context ctx;
@@ -532,7 +537,7 @@ void bl_verify_signature(uint8_t *buffer) {
     mbedtls_ecdsa_free(&ctx);
 
     if (ret != 0) {
-        HAL_UART_Transmit(&huart1, (uint8_t *)"❌ Signature and Integrity FAIL\r\n", 33, HAL_MAX_DELAY);
+        HAL_UART_Transmit(&huart1, (uint8_t *)"Signature and Integrity FAIL\r\n", 33, HAL_MAX_DELAY);
         return;
     }
 
@@ -569,7 +574,7 @@ void bl_check_version(uint8_t* buffer){
     uint32_t crc_recv = 0;
     memcpy(&crc_recv, &buffer[len - 4], 4);
     if (crc_host == crc_recv) {
-        uint32_t dummy_flag = VERSION_OK_FLAG;
+        uint32_t dummy_flag = SAVED_VER_ADDR;
         uint64_t temp;
         char msg[128];
         uint8_t first = 1;
@@ -631,6 +636,7 @@ int is_run_ok_flag_set(uint32_t status_addr) {
 }
 uint8_t get_fail_counter(uint32_t status_addr) {
     FirmwareUserStatus *status = (FirmwareUserStatus *)status_addr;
+    //del_mem(FLASH_SECTOR_6, 1);
     if (status->retry_counter == 0xFFFFFFFF){
         FirmwareUserStatus new_status;
         new_status.run_ok_flag = 0xFFFFFFFF;
@@ -640,7 +646,7 @@ uint8_t get_fail_counter(uint32_t status_addr) {
         memcpy(status_block, &new_status, 8); // chỉ lưu version
         HAL_FLASH_Unlock();
         if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, status_addr, (uint32_t)&status_block) != HAL_OK) {
-            HAL_UART_Transmit(&huart1, (uint8_t *)"❌ Failed to write status flags\r\n", 26, HAL_MAX_DELAY);
+            HAL_UART_Transmit(&huart1, (uint8_t *)"Failed to write status flags\r\n", 26, HAL_MAX_DELAY);
 
         }
         HAL_FLASH_Lock();
@@ -657,10 +663,10 @@ void increase_fail_counter(uint32_t status_addr){
         new_status.retry_counter = 1;
         uint64_t status_block[8] __attribute__((aligned(32))); // 64 bytes
         memset(status_block, 0xFF, sizeof(status_block));
-        memcpy(status_block, &new_status, sizeof(FirmwareUserStatus)); // chỉ lưu version
+        memcpy(status_block, &new_status, sizeof(FirmwareUserStatus));
         HAL_FLASH_Unlock();
         if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_FLASHWORD, status_addr, (uint32_t)&status_block) != HAL_OK) {
-            HAL_UART_Transmit(&huart1, (uint8_t *)"❌ Failed to write status flags\r\n", 26, HAL_MAX_DELAY);
+            HAL_UART_Transmit(&huart1, (uint8_t *)"Failed to write status flags\r\n", 26, HAL_MAX_DELAY);
 
         }
         HAL_FLASH_Lock();
@@ -668,16 +674,16 @@ void increase_fail_counter(uint32_t status_addr){
 }
 int count_version_in_flash(){
     int count = 0;
-    uint32_t *temp_addr_flash = (uint32_t *)0x080A0000;
+    uint32_t *temp_addr_flash = (uint32_t *)SAVED_VER_ADDR;
 
     while (*temp_addr_flash != 0xFFFFFFFF) {
         count++;
-        temp_addr_flash++;  // Tăng theo đơn vị 4 bytes
+        temp_addr_flash += 8;  // Tăng theo đơn vị 4 bytes
     }
     return count;
 }
 void check_condition_jump_to_code_uart() {
-    FirmwareMetadata *F = (FirmwareMetadata*)VERSION_OK_FLAG;
+    FirmwareMetadata *F = (FirmwareMetadata*)SAVED_VER_ADDR;
     int count_max = count_version_in_flash();
     FirmwareMetadata valid_firmware[count_max];
     int count  = 0;
@@ -689,30 +695,35 @@ void check_condition_jump_to_code_uart() {
         HAL_UART_Transmit(&huart1, (uint8_t *)"No valid firmware found\r\n", 28, HAL_MAX_DELAY);
         return;
     }
-    uint32_t stay_in_bl_app =  *(uint32_t *)0x080C0000;
+    uint32_t stay_in_bl_app =  *(uint32_t *)USER_TO_BL;
 	if(stay_in_bl_app == 0xDEADBEEF){
 		return;
 	}
-    for (int i = count - 1; i >= 0; i--) {
-        uint32_t addr = valid_firmware[i].address;
-        uint32_t status_addr =  STATUS_ADDR_APP1_FLAG ;
-        if (!check_ECC_Flag(addr)) {
-            continue; // Bỏ qua nếu ECC sai
-        }
-        uint8_t fail_counter = get_fail_counter(status_addr);
-        if (fail_counter == 0) {
-            // Lần chạy đầu tiên
-            HAL_UART_Transmit(&huart1, (uint8_t *)"First run - increasing fail counter\r\n", 41, HAL_MAX_DELAY);
-            increase_fail_counter(status_addr);
-            jump_to_user_code_uart(addr);
-            return;
-        } else if (is_run_ok_flag_set(status_addr)) {
-            jump_to_user_code_uart(addr);
-            return;
-        } else {
-            continue;
-        }
-    }
+	uint32_t newest_addr = valid_firmware[count - 1].address;
+	for (int i = count - 1; i >= 0; i--) {
+	    uint32_t addr = valid_firmware[i].address;
+	    uint32_t status_addr = STATUS_ADDR_APP1_FLAG; //
+	    if (addr == newest_addr && i != count - 1) continue;
+
+	    if (!check_ECC_Flag(addr)) continue;
+	    if (i == count - 1) {
+	        uint8_t fail_counter = get_fail_counter(status_addr);
+	        if (fail_counter == 0) {
+	            HAL_UART_Transmit(&huart1, (uint8_t *)"First run - increasing fail counter\r\n", 41, HAL_MAX_DELAY);
+	            increase_fail_counter(status_addr);
+	            jump_to_user_code_uart(addr);
+	            return;
+	        } else if (is_run_ok_flag_set(status_addr)) {
+	            jump_to_user_code_uart(addr);
+	            return;
+	        }
+	    } else {
+	        // Firmware cũ hơn, không cần check run_ok
+	        HAL_UART_Transmit(&huart1, (uint8_t *)"Rolling back to previous firmware\r\n", 36, HAL_MAX_DELAY);
+	        jump_to_user_code_uart(addr);
+	        return;
+	    }
+	}
     HAL_UART_Transmit(&huart1, (uint8_t *)"All firmwares failed, staying in bootloader\r\n", 48, HAL_MAX_DELAY);
 }
 
