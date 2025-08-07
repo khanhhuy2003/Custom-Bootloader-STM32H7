@@ -35,8 +35,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_uart_ex.h \
  ../MBEDTLS/App/mbedtls.h ../MBEDTLS/App/mbedtls_config.h \
  ../Middlewares/Third_Party/mbedTLS/include/mbedtls/check_config.h \
- ../Core/Inc/memorymap.h ../Core/Inc/main.h ../Core/Inc/rng.h \
- ../Core/Inc/tim.h ../Core/Inc/usart.h ../Core/Inc/gpio.h \
+ ../Core/Inc/rng.h ../Core/Inc/main.h ../Core/Inc/tim.h \
+ ../Core/Inc/usart.h ../Core/Inc/gpio.h \
  ../Middlewares/Third_Party/mbedTLS/include/mbedtls/ecdsa.h \
  ../MBEDTLS/App/mbedtls_config.h \
  ../Middlewares/Third_Party/mbedTLS/include/mbedtls/ecp.h \
@@ -86,9 +86,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../MBEDTLS/App/mbedtls.h:
 ../MBEDTLS/App/mbedtls_config.h:
 ../Middlewares/Third_Party/mbedTLS/include/mbedtls/check_config.h:
-../Core/Inc/memorymap.h:
-../Core/Inc/main.h:
 ../Core/Inc/rng.h:
+../Core/Inc/main.h:
 ../Core/Inc/tim.h:
 ../Core/Inc/usart.h:
 ../Core/Inc/gpio.h:
