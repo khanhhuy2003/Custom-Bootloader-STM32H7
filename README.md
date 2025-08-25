@@ -8,6 +8,7 @@ In this project, I designed and implemented a **custom bootloader** and **PC hos
   - **AES-128 encryption/decryption** for firmware confidentiality.
   - **SHA-256 hashing** for integrity verification.
   - **ECC digital signature verification** (using ECDSA with P-256 curve) for authenticity.
+- **Anti-rollback: Bootloader always chooses the newer firmware to run. When that firmware is broken, it jump backs to the previous one.
 
 ##  PC Host Tools
 
