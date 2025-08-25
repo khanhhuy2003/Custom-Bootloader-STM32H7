@@ -25,6 +25,5 @@ In this project, I designed and implemented a **custom bootloader** and **PC hos
 
 - Communicates with the bootloader over UART.
 - Sends the firmware package in secure chunks.
-- Handles command codes: check connection, write memory, jump to application, etc.
-- Displays status messages and progress.
+- Support multiple feature for user convenience: check connection between MCU and Host, check flash usage, delete flash, check stored version.
 
